@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Siel", "src\Siel\Siel.csproj", "{319E6475-ED42-46A7-AE0F-03989D6BF35B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Siel.Sample", "src\Siel.Sample\Siel.Sample.csproj", "{C02948B3-8E80-4D85-A053-314009A2DCC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Siel.DependencyInjection", "src\Siel.DependencyInjection\Siel.DependencyInjection.csproj", "{6C495D8F-8404-4A36-950F-7E5F38D07385}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Siel.MySql", "src\Siel.MySql\Siel.MySql.csproj", "{C0872600-2861-45E4-8A96-66D64D3B8458}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Siel.MySql.DependencyInjection", "src\Siel.MySql.DependencyInjection\Siel.MySql.DependencyInjection.csproj", "{5B16F487-BE41-4A66-A257-0E02D877F3D4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{881F73DD-38FB-4430-9442-7B139CF376C6}"
+ProjectSection(SolutionItems) = preProject
+	LICENSE.txt = LICENSE.txt
+	README.md = README.md
+	.gitignore = .gitignore
+	package.props = package.props
+EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{319E6475-ED42-46A7-AE0F-03989D6BF35B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{319E6475-ED42-46A7-AE0F-03989D6BF35B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{319E6475-ED42-46A7-AE0F-03989D6BF35B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{319E6475-ED42-46A7-AE0F-03989D6BF35B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C02948B3-8E80-4D85-A053-314009A2DCC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C02948B3-8E80-4D85-A053-314009A2DCC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C02948B3-8E80-4D85-A053-314009A2DCC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C02948B3-8E80-4D85-A053-314009A2DCC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C495D8F-8404-4A36-950F-7E5F38D07385}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C495D8F-8404-4A36-950F-7E5F38D07385}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C495D8F-8404-4A36-950F-7E5F38D07385}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C495D8F-8404-4A36-950F-7E5F38D07385}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0872600-2861-45E4-8A96-66D64D3B8458}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0872600-2861-45E4-8A96-66D64D3B8458}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0872600-2861-45E4-8A96-66D64D3B8458}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0872600-2861-45E4-8A96-66D64D3B8458}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B16F487-BE41-4A66-A257-0E02D877F3D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B16F487-BE41-4A66-A257-0E02D877F3D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B16F487-BE41-4A66-A257-0E02D877F3D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B16F487-BE41-4A66-A257-0E02D877F3D4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

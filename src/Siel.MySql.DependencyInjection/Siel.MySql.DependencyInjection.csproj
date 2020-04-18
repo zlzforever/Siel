@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../../package.props" />
+    <PropertyGroup>
+        <PackageId>Siel.MySql.DependenceInjection</PackageId>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Siel.DependencyInjection\Siel.DependencyInjection.csproj" />
+        <ProjectReference Include="..\Siel.MySql\Siel.MySql.csproj" />
+    </ItemGroup>
+</Project>
