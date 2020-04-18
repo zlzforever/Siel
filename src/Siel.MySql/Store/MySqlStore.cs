@@ -27,8 +27,8 @@ create table if not exists siel_task
     creation_time       timestamp   not null default current_timestamp   
 );
 
-ALTER TABLE siel_task ADD INDEX (name);
-ALTER TABLE siel_task ADD INDEX (creation_time);
+create index IX_siel_task_name on siel_task (name);
+create index IX_siel_task_creation_time on siel_task (creation_time);
 
 create table if not exists siel_task_success
 (
@@ -37,8 +37,8 @@ create table if not exists siel_task_success
     creation_time     timestamp   not null default current_timestamp
 );
 
-ALTER TABLE siel_task_success ADD INDEX (task_id);
-ALTER TABLE siel_task_success ADD INDEX (creation_time);
+create index IX_siel_task_success_creation_time on siel_task_success (creation_time);
+create index IX_siel_task_success_task_id on siel_task_success (task_id);
 
 create table if not exists siel_task_failure
 (
@@ -48,8 +48,8 @@ create table if not exists siel_task_failure
     creation_time     timestamp   not null default current_timestamp
 );
 
-ALTER TABLE siel_task_failure ADD INDEX (task_id);
-ALTER TABLE siel_task_failure ADD INDEX (creation_time);
+create index IX_siel_task_failure_creation_time on siel_task_failure (creation_time);
+create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 ";
 
         public MySqlStore(string connectionString)
@@ -62,7 +62,10 @@ ALTER TABLE siel_task_failure ADD INDEX (creation_time);
             conn.Execute($"CREATE SCHEMA IF NOT EXISTS {database} DEFAULT CHARACTER SET utf8mb4;");
             conn.Open();
             conn.ChangeDatabase(database);
-            conn.Execute(Sql);
+            if (!conn.Query<string>("SHOW TABLES LIKE 'siel_task';").Any())
+            {
+                conn.Execute(Sql);
+            }
         }
 
         public async ValueTask<bool> SaveAsync(PersistedTask task)
@@ -155,7 +158,15 @@ ALTER TABLE siel_task_failure ADD INDEX (creation_time);
             }
         }
 
-        public async Task SaveFailureAsync(FailureEvent @event)
+        public async ValueTask<bool> UpdateAsync(PersistedTask task)
+        {
+            await using var conn = new MySqlConnection(_connectionString);
+            return await conn.ExecuteAsync(
+                $"update siel_task  set name = @Name, type_name=@TypeName, data = @Data, properties = @Properties where id = @Id",
+                task) == 1;
+        }
+
+        public async Task FailAsync(FailureEvent @event)
         {
             await using var conn = new MySqlConnection(_connectionString);
             await conn.ExecuteAsync(
@@ -163,7 +174,7 @@ ALTER TABLE siel_task_failure ADD INDEX (creation_time);
                 @event);
         }
 
-        public async Task SaveSuccessAsync(SuccessEvent @event)
+        public async Task SuccessAsync(SuccessEvent @event)
         {
             await using var conn = new MySqlConnection(_connectionString);
             await conn.ExecuteAsync(

@@ -18,7 +18,7 @@ namespace Siel.Scheduler
     {
         private readonly ITaskStore _taskStore;
         private readonly HashedWheelTimer _timer;
-        private bool _initialized;
+        private int _initialized;
         private readonly ConcurrentDictionary<string, ITask> _dict;
         private readonly ILogger _logger;
         private readonly ILoggerFactory _loggerFactory;
@@ -47,7 +47,7 @@ namespace Siel.Scheduler
         public async ValueTask<string> NewAsync(string id, string name, SielTask task,
             Dictionary<string, string> properties = null)
         {
-            CheckIfInitialized();
+            CheckIdAndName(id, name);
 
             if (_taskFactory is SerializerTaskFactory)
             {
@@ -59,6 +59,8 @@ namespace Siel.Scheduler
                 }
             }
 
+            await WaitForInitialized();
+
             var persistedTask = new PersistedTask(id, name, task, properties);
             if (await _taskStore.SaveAsync(persistedTask))
             {
@@ -67,8 +69,35 @@ namespace Siel.Scheduler
             else
             {
                 _logger.LogWarning(
-                    $"Store task {persistedTask.Id}, {persistedTask.Name} failed, please make sure the id isn't duplicate");
+                    $"Save task {persistedTask.Id}, {persistedTask.Name} to storage failed, please make sure the id isn't duplicate");
                 return null;
+            }
+        }
+
+        public async ValueTask<bool> UpdateAsync(string id, string name, SielTask task,
+            Dictionary<string, string> properties = null)
+        {
+            CheckIdAndName(id, name);
+
+            if (_dict.TryRemove(id, out var cacheTask))
+            {
+                cacheTask.Remove();
+                var persistedTask = new PersistedTask(id, name, task, properties);
+                if (await _taskStore.UpdateAsync(persistedTask))
+                {
+                    EnqueueTask(persistedTask);
+                    return true;
+                }
+                else
+                {
+                    throw new ApplicationException(
+                        $"Update task {persistedTask.Id}, {persistedTask.Name} to storage failed");
+                }
+            }
+            else
+            {
+                throw new ApplicationException(
+                    $"Get task {id}, {name} cache failed");
             }
         }
 
@@ -143,7 +172,38 @@ namespace Siel.Scheduler
                 page++;
             }
 
-            _initialized = true;
+            Interlocked.Exchange(ref _initialized, 1);
+        }
+
+        private void CheckIdAndName(string id, string name)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new ArgumentNullException(nameof(id));
+            }
+
+            if (id.Length > 36)
+            {
+                throw new ArgumentOutOfRangeException($"The length of id should less than 36");
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            if (name.Length > 255)
+            {
+                throw new ArgumentOutOfRangeException($"The length of name should less than 255");
+            }
+        }
+
+        private async Task WaitForInitialized()
+        {
+            while (_initialized != 1)
+            {
+                await Task.Delay(100, default);
+            }
         }
 
         private string EnqueueTask(PersistedTask persistedTask)
@@ -160,12 +220,12 @@ namespace Siel.Scheduler
             task.OnSuccess += async @event =>
             {
                 _logger.LogInformation($"Execute task {@event.Id} success");
-                await _eventStore.SaveSuccessAsync(@event);
+                await _eventStore.SuccessAsync(@event);
             };
             task.OnFail += async @event =>
             {
                 _logger.LogError($"Execute task {@event.Id} failed: {@event.StackTrace}");
-                await _eventStore.SaveFailureAsync(@event);
+                await _eventStore.FailAsync(@event);
             };
 
             var next = task.GetNextTimeSpan();
@@ -179,22 +239,6 @@ namespace Siel.Scheduler
             {
                 throw new ApplicationException(
                     $"Enqueue {persistedTask.Id}, {persistedTask.Name} task object to cache failed");
-            }
-        }
-
-        private void CheckIfInitialized()
-        {
-            if (!_initialized)
-            {
-                throw new InvalidOperationException("Scheduler is not initialized");
-            }
-        }
-
-        public async Task WaitForInitialized()
-        {
-            while (!_initialized)
-            {
-                await Task.Delay(100, default);
             }
         }
     }

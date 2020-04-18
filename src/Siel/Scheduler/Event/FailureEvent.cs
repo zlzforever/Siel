@@ -1,6 +1,6 @@
 namespace Siel.Scheduler.Event
 {
-    public class FailureEvent
+    public struct FailureEvent
     {
         public string Id { get; private set; }
         public string StackTrace { get; private set; }

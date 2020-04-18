@@ -10,5 +10,6 @@ namespace Siel.Store
         Task<IEnumerable<PersistedTask>> TakeAsync(int page, int limit);
         ValueTask<bool> RemoveAsync(string id);
         Task<PagedResult<PersistedTask>> PagedQueryAsync(string keyword, int page, int limit);
+        ValueTask<bool> UpdateAsync(PersistedTask task);
     }
 }

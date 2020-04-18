@@ -51,9 +51,15 @@ namespace Siel.Sample
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await _scheduler.WaitForInitialized();
             var id = "a241acb9-b42a-49ba-9421-aba1011abce7";
             await _scheduler.NewAsync(id, "test", new TestTask {Cron = "*/5 * * * * *"});
+            await Task.Delay(12000, default);
+            await _scheduler.TriggerAsync(id);
+            await Task.Delay(3000, default);
+            await _scheduler.UpdateAsync(id, "test", new TestTask {Cron = "*/7 * * * * *"});
+            await Task.Delay(16000, default);
+            await _scheduler.RemoveAsync(id);
+            await _scheduler.StopAsync(default);
         }
     }
 
@@ -61,8 +67,8 @@ namespace Siel.Sample
     {
         static async Task Main(string[] args)
         {
-            // await Test();
-            await TestDependenceInjection();
+            await Test();
+            // await TestDependenceInjection();
         }
 
         private static async Task TestDependenceInjection()
@@ -85,16 +91,19 @@ namespace Siel.Sample
             var store = new MySqlStore(
                 "Database='siel';Data Source=localhost;password=1qazZAQ!;User ID=root;Port=3306;");
 
-            var id = "a241acb9-b42a-49ba-9421-aba1011abce7";
-            var scheduler = new DefaultScheduler(new SerializerTaskFactory(), store, store);
+            IScheduler scheduler = new DefaultScheduler(new SerializerTaskFactory(), store, store);
             await scheduler.StartAsync(default);
-            await scheduler.WaitForInitialized();
+
+            var id = "a241acb9-b42a-49ba-9421-aba1011abce7";
             await scheduler.NewAsync(id, "test", new TestTask {Cron = "*/5 * * * * *"});
-            Thread.Sleep(12000);
+            await Task.Delay(12000, default);
             await scheduler.TriggerAsync(id);
-            Thread.Sleep(3000);
+            await Task.Delay(3000, default);
+            await scheduler.UpdateAsync(id, "test", new TestTask {Cron = "*/7 * * * * *"});
+            await Task.Delay(16000, default);
             await scheduler.RemoveAsync(id);
             await scheduler.StopAsync(default);
+
             Console.Read();
             Console.WriteLine("Bye");
         }

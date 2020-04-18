@@ -1,6 +1,6 @@
 namespace Siel.Scheduler.Event
 {
-    public class SuccessEvent  
+    public struct SuccessEvent  
     {
         public string Id { get; private set; }
 

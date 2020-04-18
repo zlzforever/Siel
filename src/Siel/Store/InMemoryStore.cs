@@ -71,7 +71,13 @@ namespace Siel.Store
             return Task.FromResult(result);
         }
 
-        public Task SaveFailureAsync(FailureEvent @event)
+        public ValueTask<bool> UpdateAsync(PersistedTask persistedTask)
+        {
+            var result = _dict.TryUpdate(persistedTask.Id, persistedTask, persistedTask);
+            return new ValueTask<bool>(result);
+        }
+
+        public Task FailAsync(FailureEvent @event)
         {
             _failureEvents.Enqueue(@event);
             if (_dict.TryGetValue(@event.Id, out var persistedTask))
@@ -82,7 +88,7 @@ namespace Siel.Store
             return Task.CompletedTask;
         }
 
-        public Task SaveSuccessAsync(SuccessEvent @event)
+        public Task SuccessAsync(SuccessEvent @event)
         {
             _successEvents.Enqueue(@event);
             if (_dict.TryGetValue(@event.Id, out var persistedTask))
