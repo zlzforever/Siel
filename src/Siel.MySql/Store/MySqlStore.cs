@@ -70,7 +70,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 
         public async ValueTask<bool> SaveAsync(PersistedTask task)
         {
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             return await conn.ExecuteAsync(
                 $"insert ignore into siel_task  (id, name, type_name, data, properties) values (@Id, @Name, @TypeName, @Data, @Properties);",
                 task) == 1;
@@ -89,7 +89,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
             }
 
             var start = (page - 1) * limit;
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             return await conn.QueryAsync<PersistedTask>(
                 $"select id, name, type_name as TypeName, data, properties, success, failure, creation_time  from siel_task order by creation_time limit @Start, @Limit",
                 new
@@ -101,7 +101,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 
         public async ValueTask<bool> RemoveAsync(string id)
         {
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             return await conn.ExecuteAsync(
                 $"delete from siel_task_failure where task_id = @Id; delete from siel_task_success where task_id = @Id; delete from siel_task where id = @Id;",
                 new
@@ -124,7 +124,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 
             var result = new PagedResult<PersistedTask> {Page = page, Limit = limit};
             var start = (page - 1) * limit;
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 var count = await conn.QuerySingleAsync<int>($"select count(*) from siel_task");
@@ -160,7 +160,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 
         public async ValueTask<bool> UpdateAsync(PersistedTask task)
         {
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             return await conn.ExecuteAsync(
                 $"update siel_task  set name = @Name, type_name=@TypeName, data = @Data, properties = @Properties where id = @Id",
                 task) == 1;
@@ -168,7 +168,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 
         public async Task FailAsync(FailureEvent @event)
         {
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             await conn.ExecuteAsync(
                 $"insert into siel_task_failure (task_id, stack_trace) values (@Id, @StackTrace); update siel_task set failure = failure + 1 where id = @Id;",
                 @event);
@@ -176,7 +176,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
 
         public async Task SuccessAsync(SuccessEvent @event)
         {
-            await using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             await conn.ExecuteAsync(
                 $"insert into siel_task_success (task_id) values (@Id); update siel_task set success = success + 1 where id = @Id;",
                 @event);

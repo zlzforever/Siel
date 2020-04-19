@@ -37,14 +37,14 @@ namespace Siel.Scheduler
             _logger = _loggerFactory == null ? NullLogger.Instance : _loggerFactory.CreateLogger(GetType());
         }
 
-        public async ValueTask<string> NewAsync(string name, SielTask task,
+        public async ValueTask<string> NewAsync(string name, ITask task,
             Dictionary<string, string> properties = null)
         {
             var id = CombGuid.NewGuid().ToString();
             return await NewAsync(id, name, task, properties);
         }
 
-        public async ValueTask<string> NewAsync(string id, string name, SielTask task,
+        public async ValueTask<string> NewAsync(string id, string name, ITask task,
             Dictionary<string, string> properties = null)
         {
             CheckIdAndName(id, name);
@@ -74,7 +74,7 @@ namespace Siel.Scheduler
             }
         }
 
-        public async ValueTask<bool> UpdateAsync(string id, string name, SielTask task,
+        public async ValueTask<bool> UpdateAsync(string id, string name, ITask task,
             Dictionary<string, string> properties = null)
         {
             CheckIdAndName(id, name);

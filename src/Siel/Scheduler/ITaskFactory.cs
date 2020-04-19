@@ -2,6 +2,6 @@ namespace Siel.Scheduler
 {
     public interface ITaskFactory
     {
-        SielTask Create(string typeName, string data);
+        TaskBase Create(string typeName, string data);
     }
 }

@@ -4,7 +4,10 @@ using HWT;
 
 namespace Siel
 {
-    public abstract class CyclicalTask : SielTask
+    /// <summary>
+    /// Cron 表达式定义的任务
+    /// </summary>
+    public abstract class CronTask : TaskBase
     {
         private int _retried;
 
@@ -18,9 +21,9 @@ namespace Siel
             return (long) GetNextTimestamp(Cron).TotalMilliseconds;
         }
 
-        public override void Load(SielTask origin)
+        public override void Load(TaskBase origin)
         {
-            if (origin is CyclicalTask task)
+            if (origin is CronTask task)
             {
                 Cron = task.Cron;
             }

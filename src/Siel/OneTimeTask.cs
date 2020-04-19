@@ -2,7 +2,7 @@ using System;
 
 namespace Siel
 {
-    public abstract class OneTimeTask : SielTask
+    public abstract class OneTimeTask : TaskBase
     {
         protected OneTimeTask(DateTime triggerAt)
         {
@@ -19,7 +19,7 @@ namespace Siel
             return (long) TriggerAt.Subtract(DateTime.UtcNow).TotalMilliseconds;
         }
 
-        public override void Load(SielTask origin)
+        public override void Load(TaskBase origin)
         {
             if (origin is OneTimeTask task)
             {

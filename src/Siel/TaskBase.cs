@@ -9,7 +9,7 @@ using Siel.Scheduler.Event;
 
 namespace Siel
 {
-    public abstract class SielTask : ITask
+    public abstract class TaskBase : ITask
     {
         private bool _removed;
 
@@ -82,14 +82,14 @@ namespace Siel
                     success = await HandleAsync();
                     if (OnSuccess != null)
                     {
-                        await OnSuccess.Invoke(new SuccessEvent(Id));
+                        // await OnSuccess.Invoke(new SuccessEvent(Id));
                     }
                 }
                 catch (Exception e)
                 {
                     if (OnFail != null)
                     {
-                        await OnFail.Invoke(new FailureEvent(Id, e.StackTrace));
+                        // await OnFail.Invoke(new FailureEvent(Id, e.StackTrace));
                     }
                 }
                 finally
@@ -107,7 +107,7 @@ namespace Siel
         {
         }
 
-        public abstract void Load(SielTask origin);
+        public abstract void Load(TaskBase origin);
 
         public abstract void Verify();
     }

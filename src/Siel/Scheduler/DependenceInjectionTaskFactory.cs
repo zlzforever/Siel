@@ -13,7 +13,7 @@ namespace Siel.Scheduler
             _serviceProvider = serviceProvider;
         }
 
-        public SielTask Create(string typeName, string json)
+        public TaskBase Create(string typeName, string json)
         {
             if (string.IsNullOrWhiteSpace(typeName))
             {
@@ -33,13 +33,13 @@ namespace Siel.Scheduler
                 throw new ApplicationException("Create task object by DI failed");
             }
 
-            var task = obj as SielTask;
+            var task = obj as TaskBase;
             if (task == null)
             {
                 throw new ApplicationException($"{typeName} isn't a SielTask");
             }
 
-            var origin = (SielTask) JsonConvert.DeserializeObject(json, type);
+            var origin = (TaskBase) JsonConvert.DeserializeObject(json, type);
             task.Load(origin);
             return task;
         }

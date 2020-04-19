@@ -5,7 +5,7 @@ namespace Siel.Scheduler
 {
     public class SerializerTaskFactory : ITaskFactory
     {
-        public SielTask Create(string typeName, string json)
+        public TaskBase Create(string typeName, string json)
         {
             if (string.IsNullOrWhiteSpace(typeName))
             {
@@ -21,7 +21,7 @@ namespace Siel.Scheduler
             try
             {
                 var task = JsonConvert.DeserializeObject(json, type);
-                return task as SielTask;
+                return task as TaskBase;
             }
             catch
             {
