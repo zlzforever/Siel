@@ -47,13 +47,13 @@ namespace Siel
         /// </summary>
         internal event AsyncEventHandler<FailureEvent> OnFail;
 
-        protected abstract ValueTask<bool> HandleAsync();
+        protected abstract Task HandleAsync();
 
         /// <summary>
         /// Get next time span
         /// </summary>
         /// <returns></returns>
-        public abstract long GetNextTimeSpan();
+        public abstract TimeSpan GetNextTimeSpan();
 
         public void Remove()
         {
@@ -85,17 +85,18 @@ namespace Siel
                 var success = false;
                 try
                 {
-                    success = await HandleAsync();
+                    await HandleAsync();
+                    success = true;
                     if (OnSuccess != null)
                     {
-                        // await OnSuccess.Invoke(new SuccessEvent(Id));
+                        await OnSuccess.Invoke(new SuccessEvent(Id));
                     }
                 }
                 catch (Exception e)
                 {
                     if (OnFail != null)
                     {
-                        // await OnFail.Invoke(new FailureEvent(Id, e.StackTrace));
+                        await OnFail.Invoke(new FailureEvent(Id, e.StackTrace));
                     }
                 }
                 finally

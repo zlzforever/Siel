@@ -3,30 +3,17 @@ using Newtonsoft.Json;
 
 namespace Siel.Scheduler
 {
-    public class SerializerTaskFactory : ITaskFactory
+    public class SerializerTaskFactory : TaskFactoryBase
     {
-        public TaskBase Create(string typeName, string json)
+        protected override TaskBase Create(Type type, string json)
         {
-            if (string.IsNullOrWhiteSpace(typeName))
+            var task = JsonConvert.DeserializeObject(json, type);
+            if (task == null)
             {
-                return null;
+                throw new ApplicationException($"Create task {type.FullName} object by Serializer failed");
             }
 
-            var type = Type.GetType(typeName);
-            if (type == null)
-            {
-                return null;
-            }
-
-            try
-            {
-                var task = JsonConvert.DeserializeObject(json, type);
-                return task as TaskBase;
-            }
-            catch
-            {
-                return null;
-            }
+            return (TaskBase) task;
         }
     }
 }

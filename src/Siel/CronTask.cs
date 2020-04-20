@@ -16,9 +16,9 @@ namespace Siel
         /// </summary>
         public string Cron { get; set; }
 
-        public override long GetNextTimeSpan()
+        public override TimeSpan GetNextTimeSpan()
         {
-            return (long) GetNextTimestamp(Cron).TotalMilliseconds;
+            return GetNextTimeSpan(Cron);
         }
 
         public override void Load(TaskBase origin)
@@ -36,10 +36,14 @@ namespace Siel
                 throw new ArgumentException("Cron expression should not be null/empty");
             }
 
-            var next = GetNextTimeSpan();
-            if (next == 0)
+            var data = Cron.Split(' ');
+            if (data.Length == 6)
             {
-                throw new ArgumentException($"Cron expression {Cron} isn't valid");
+                CronExpression.Parse(Cron, CronFormat.IncludeSeconds);
+            }
+            else
+            {
+                CronExpression.Parse(Cron);
             }
         }
 
@@ -66,13 +70,13 @@ namespace Siel
             }
 
             var next = GetNextTimeSpan();
-            if (next > 0)
+            if (next > TimeSpan.Zero)
             {
-                timeout.Timer.NewTimeout(this, TimeSpan.FromMilliseconds(next));
+                timeout.Timer.NewTimeout(this, next);
             }
         }
 
-        private static TimeSpan GetNextTimestamp(string cron)
+        private static TimeSpan GetNextTimeSpan(string cron)
         {
             var data = cron.Split(' ');
             var expression = data.Length == 6

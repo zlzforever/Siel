@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -9,6 +10,7 @@ using HWT;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 using Siel.Common;
 using Siel.Store;
 
@@ -55,7 +57,7 @@ namespace Siel.Scheduler
                 if (constructors.Any(x => x.GetParameters().Length > 0))
                 {
                     _logger.LogWarning(
-                        "Your task type contains parameters constructor, SerializerTaskFactory can't use those constructor, maybe you want to use DependenceInjectionTaskFactory");
+                        "Your task contains parameters constructor, SerializerTaskFactory may can't use those constructors, Do you want to try DependenceInjectionTaskFactory?");
                 }
             }
 
@@ -69,7 +71,7 @@ namespace Siel.Scheduler
             else
             {
                 _logger.LogWarning(
-                    $"Save task {persistedTask.Id}, {persistedTask.Name} to storage failed, please make sure the id isn't duplicate");
+                    $"Save task {persistedTask.Id}: {JsonConvert.SerializeObject(task)} to storage failed");
                 return null;
             }
         }
@@ -91,13 +93,13 @@ namespace Siel.Scheduler
                 else
                 {
                     throw new ApplicationException(
-                        $"Update task {persistedTask.Id}, {persistedTask.Name} to storage failed");
+                        $"Update task {persistedTask.Id}: {JsonConvert.SerializeObject(task)} to storage failed");
                 }
             }
             else
             {
                 throw new ApplicationException(
-                    $"Get task {id}, {name} cache failed");
+                    $"Find task {id} in cache failed");
             }
         }
 
@@ -105,7 +107,7 @@ namespace Siel.Scheduler
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                throw new ArgumentException("Id should not null/empty");
+                throw new ArgumentException("Id should be not null/empty");
             }
 
             if (_dict.TryGetValue(id, out var task))
@@ -123,7 +125,7 @@ namespace Siel.Scheduler
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                throw new ArgumentException("Id should not null/empty");
+                throw new ArgumentException("Id should be not null/empty");
             }
 
             if (_dict.TryGetValue(id, out var task))
@@ -137,6 +139,11 @@ namespace Siel.Scheduler
             }
         }
 
+        public async Task<PagedResult<PersistedTask>> PagedQueryAsync(string keyword, int page, int limit)
+        {
+            return await _taskStore.PagedQueryAsync(keyword, page, limit);
+        }
+
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             _timer.Stop();
@@ -148,16 +155,16 @@ namespace Siel.Scheduler
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var page = 1;
-            var batch = 100;
+            var batch = 200;
             var count = batch;
             while (true)
             {
-                var persistedTasks = await _taskStore.TakeAsync(page, batch);
+                var tasks = await _taskStore.TakeAsync(page, batch);
 
-                foreach (var persistedTask in persistedTasks)
+                foreach (var task in tasks)
                 {
                     count--;
-                    EnqueueTask(persistedTask);
+                    EnqueueTask(task);
                 }
 
                 if (count == 0)
@@ -175,6 +182,7 @@ namespace Siel.Scheduler
             Interlocked.Exchange(ref _initialized, 1);
         }
 
+        [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local")]
         private void CheckIdAndName(string id, string name)
         {
             if (string.IsNullOrWhiteSpace(id))
@@ -184,7 +192,7 @@ namespace Siel.Scheduler
 
             if (id.Length > 36)
             {
-                throw new ArgumentOutOfRangeException($"The length of id should less than 36");
+                throw new ArgumentOutOfRangeException($"The length of id should be less than 36");
             }
 
             if (string.IsNullOrWhiteSpace(name))
@@ -194,7 +202,7 @@ namespace Siel.Scheduler
 
             if (name.Length > 255)
             {
-                throw new ArgumentOutOfRangeException($"The length of name should less than 255");
+                throw new ArgumentOutOfRangeException($"The length of name should be less than 255");
             }
         }
 
@@ -209,11 +217,6 @@ namespace Siel.Scheduler
         private string EnqueueTask(PersistedTask persistedTask)
         {
             var task = _taskFactory.Create(persistedTask.TypeName, persistedTask.Data);
-            if (task == null)
-            {
-                throw new ApplicationException($"Create {persistedTask.Id}, {persistedTask.Name} task object failed");
-            }
-
             task.Verify();
             task.UseLoggerFactory(_loggerFactory);
             task.Initialize(persistedTask.Id, persistedTask.Name, persistedTask.GetProperties());
@@ -229,16 +232,24 @@ namespace Siel.Scheduler
             };
 
             var next = task.GetNextTimeSpan();
-            _timer.NewTimeout(task, TimeSpan.FromMilliseconds(next));
-
-            if (_dict.TryAdd(persistedTask.Id, task))
+            if (next > TimeSpan.Zero)
             {
-                return persistedTask.Id;
+                _timer.NewTimeout(task, next);
+
+                if (_dict.TryAdd(persistedTask.Id, task))
+                {
+                    return persistedTask.Id;
+                }
+                else
+                {
+                    throw new ApplicationException(
+                        $"Enqueue task  {persistedTask.Id} object to cache failed");
+                }
             }
             else
             {
                 throw new ApplicationException(
-                    $"Enqueue {persistedTask.Id}, {persistedTask.Name} task object to cache failed");
+                    $"Enqueue task {persistedTask.Id}: {JsonConvert.SerializeObject(task)} failed because it will occur never");
             }
         }
     }

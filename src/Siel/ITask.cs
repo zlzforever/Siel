@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using HWT;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,7 @@ namespace Siel
         void Remove();
         void Initialize(string id, string name, IReadOnlyDictionary<string, string> properties);
         void UseLoggerFactory(ILoggerFactory loggerFactory);
-        long GetNextTimeSpan();
+        TimeSpan GetNextTimeSpan();
         void Verify();
     }
 }

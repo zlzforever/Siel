@@ -28,11 +28,11 @@ namespace Siel.DependencyInjection
             return builder;
         }
 
-        public static SielBuilder UseMemoryStore(this SielBuilder builder)
+        public static SielBuilder UseInMemoryStore(this SielBuilder builder)
         {
-            var memoryStore = new InMemoryStore();
-            builder.Services.AddSingleton<ITaskStore>(memoryStore);
-            builder.Services.AddSingleton<IEventStore>(memoryStore);
+            var store = new InMemoryStore();
+            builder.Services.AddSingleton<ITaskStore>(store);
+            builder.Services.AddSingleton<IEventStore>(store);
             return builder;
         }
     }

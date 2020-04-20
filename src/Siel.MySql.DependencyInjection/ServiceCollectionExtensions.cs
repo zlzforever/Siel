@@ -7,7 +7,7 @@ namespace Siel.MySql.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static SielBuilder UseMySqlStore(this SielBuilder builder, string connectionString)
+        public static SielBuilder UseMySql(this SielBuilder builder, string connectionString)
         {
             var store = new MySqlStore(connectionString);
             builder.Services.AddSingleton<ITaskStore>(store);

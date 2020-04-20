@@ -14,9 +14,9 @@ namespace Siel
 
         public DateTime TriggerAt { get; private set; }
 
-        public override long GetNextTimeSpan()
+        public override TimeSpan GetNextTimeSpan()
         {
-            return (long) TriggerAt.Subtract(DateTime.UtcNow).TotalMilliseconds;
+            return TriggerAt.Subtract(DateTime.UtcNow);
         }
 
         public override void Load(TaskBase origin)

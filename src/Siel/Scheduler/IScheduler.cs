@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Siel.Common;
+using Siel.Store;
 
 namespace Siel.Scheduler
 {
@@ -15,5 +17,6 @@ namespace Siel.Scheduler
             Dictionary<string, string> properties = null);
         ValueTask<bool> RemoveAsync(string id);
         ValueTask<bool> TriggerAsync(string id);
+        Task<PagedResult<PersistedTask>> PagedQueryAsync(string keyword, int page, int limit);
     }
 }

@@ -1,46 +1,38 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Siel.Common;
 using Siel.DependencyInjection;
 using Siel.MySql.DependencyInjection;
 using Siel.MySql.Store;
 using Siel.Scheduler;
+using Siel.Store;
 
 namespace Siel.Sample
 {
     public class TestTask : CronTask
     {
-        private readonly ILogger _logger;
-        public static int TriggerCount;
-
-        public TestTask()
+        protected override Task HandleAsync()
         {
+            var msg =
+                $"Id {Id}, Name: {Name}, Cron: {Cron}, Properties: {JsonConvert.SerializeObject(Properties)} TriggerAt: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            Logger.LogInformation(msg);
+            return Task.CompletedTask;
         }
+    }
 
-        public TestTask(ILogger<TestTask> logger)
+    public class PerformTask : CronTask
+    {
+        public static long TriggerCount;
+
+        protected override Task HandleAsync()
         {
-            _logger = logger;
-        }
-
-        protected override ValueTask<bool> HandleAsync()
-        {
-            var msg = $"Id {Id}, Name: {Name}, Cron: {Cron}, TriggerAt: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
-            if (_logger != null)
-            {
-                _logger.LogInformation(msg);
-            }
-            else
-            {
-                Console.WriteLine(msg);
-            }
-
             Interlocked.Increment(ref TriggerCount);
-            return new ValueTask<bool>(true);
+            return Task.CompletedTask;
         }
     }
 
@@ -78,27 +70,24 @@ namespace Siel.Sample
 
         private static async Task TestPerform()
         {
-            var store = new MySqlStore(
-                "Database='siel';Data Source=localhost;password=1qazZAQ!;User ID=root;Port=3306;");
+            var store = new InMemoryStore();
 
             IScheduler scheduler = new DefaultScheduler(new SerializerTaskFactory(), store, store);
             await scheduler.StartAsync(default);
 
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            int count = 100000;
-            Parallel.For(0, count, new ParallelOptions
-            {
-                MaxDegreeOfParallelism = 50
-            }, i =>
+            int count = 500000;
+
+            for (int i = 0; i < count; ++i)
             {
                 var id = CombGuid.NewGuid().ToString();
-                scheduler.NewAsync(id, $"test {i}", new TestTask {Cron = "5 * * * * *"}).GetAwaiter().GetResult();
-            });
+                await scheduler.NewAsync(id, $"test {i}", new PerformTask {Cron = "*/1 * * * * ?"});
+            }
 
-            stopwatch.Stop();
-            Console.WriteLine($"Create rate {count / stopwatch.ElapsedMilliseconds / 1000} jobs/s");
-            Console.WriteLine($"Perform rate {TestTask.TriggerCount / stopwatch.ElapsedMilliseconds / 1000} jobs/s");
+            var c1 = PerformTask.TriggerCount;
+            await Task.Delay(11000, default);
+            var c2 = PerformTask.TriggerCount;
+            var c = c2 - c1;
+            Console.WriteLine($"Perform {c / 11} jobs/s");
             await scheduler.StopAsync(default);
             Console.Read();
             Console.WriteLine("Bye");
@@ -112,7 +101,7 @@ namespace Siel.Sample
                 x.AddSiel(builder =>
                 {
                     builder.UseDependencyInjectionTaskFactory();
-                    builder.UseMySqlStore(
+                    builder.UseMySql(
                         "Database='siel';Data Source=localhost;password=1qazZAQ!;User ID=root;Port=3306;");
                 });
                 x.AddHostedService<SeedData>();
@@ -124,17 +113,21 @@ namespace Siel.Sample
             var store = new MySqlStore(
                 "Database='siel';Data Source=localhost;password=1qazZAQ!;User ID=root;Port=3306;");
 
-            IScheduler scheduler = new DefaultScheduler(new SerializerTaskFactory(), store, store);
+            var loggerFactory = LoggerFactory.Create(x => { x.AddConsole(); });
+            IScheduler scheduler = new DefaultScheduler(new SerializerTaskFactory(), store, store, loggerFactory);
             await scheduler.StartAsync(default);
 
-            var id = CombGuid.NewGuid().ToString();
-            await scheduler.NewAsync(id, "test", new TestTask {Cron = "*/5 * * * * *"});
+            var id1 = CombGuid.NewGuid().ToString();
+            await scheduler.NewAsync(id1, "test", new TestTask {Cron = "*/3 * * * * *"});
             await Task.Delay(12000, default);
-            await scheduler.TriggerAsync(id);
+            await scheduler.TriggerAsync(id1);
             await Task.Delay(3000, default);
-            await scheduler.UpdateAsync(id, "test", new TestTask {Cron = "*/7 * * * * *"});
+            await scheduler.UpdateAsync(id1, "test", new TestTask {Cron = "*/7 * * * * *"});
             await Task.Delay(16000, default);
-            await scheduler.RemoveAsync(id);
+            var queryResult = await scheduler.PagedQueryAsync(null, 0, 100);
+            Console.WriteLine(
+                $"Page {queryResult.Page}, Count {queryResult.Count}, Limit {queryResult.Limit}, Data: {JsonConvert.SerializeObject(queryResult.Data)}");
+            await scheduler.RemoveAsync(id1);
             await scheduler.StopAsync(default);
 
             Console.Read();
