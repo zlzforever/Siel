@@ -29,7 +29,7 @@ namespace Siel
         /// 任务数据
         /// </summary>
         [JsonIgnore]
-        public Dictionary<string, string> Properties { get; private set; }
+        public Dictionary<string, string> Properties { get; private set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// 日志接口
@@ -60,11 +60,17 @@ namespace Siel
             _removed = true;
         }
 
-        public void Initialize(string id, string name, Dictionary<string, string> properties)
+        public void Initialize(string id, string name, IReadOnlyDictionary<string, string> properties)
         {
             Id = id;
             Name = name;
-            Properties = properties;
+            if (properties != null)
+            {
+                foreach (var property in properties)
+                {
+                    Properties.Add(property.Key, property.Value);
+                }
+            }
         }
 
         public void UseLoggerFactory(ILoggerFactory loggerFactory)

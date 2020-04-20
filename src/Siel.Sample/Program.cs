@@ -111,7 +111,7 @@ namespace Siel.Sample
                 x.AddScoped<TestTask>();
                 x.AddSiel(builder =>
                 {
-                    builder.UseDependenceInjectionTaskFactory();
+                    builder.UseDependencyInjectionTaskFactory();
                     builder.UseMySqlStore(
                         "Database='siel';Data Source=localhost;password=1qazZAQ!;User ID=root;Port=3306;");
                 });

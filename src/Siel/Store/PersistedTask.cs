@@ -8,7 +8,7 @@ namespace Siel.Store
 {
     public class PersistedTask
     {
-        private readonly Dictionary<string, string> _emptyDict = new Dictionary<string, string>();
+        private readonly IReadOnlyDictionary<string, string> _emptyDict = new Dictionary<string, string>();
 
         /// <summary>
         /// ID
@@ -82,7 +82,7 @@ namespace Siel.Store
             FailureCount += 1;
         }
 
-        public Dictionary<string, string> GetProperties()
+        public IReadOnlyDictionary<string, string> GetProperties()
         {
             if (string.IsNullOrWhiteSpace(Properties))
             {

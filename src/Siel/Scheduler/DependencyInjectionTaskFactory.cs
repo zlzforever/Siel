@@ -4,11 +4,11 @@ using Newtonsoft.Json;
 
 namespace Siel.Scheduler
 {
-    public class DependenceInjectionTaskFactory : ITaskFactory
+    public class DependencyInjectionTaskFactory : ITaskFactory
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public DependenceInjectionTaskFactory(IServiceProvider serviceProvider)
+        public DependencyInjectionTaskFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }

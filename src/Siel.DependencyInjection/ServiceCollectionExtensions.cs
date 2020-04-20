@@ -22,9 +22,9 @@ namespace Siel.DependencyInjection
             return builder;
         }
 
-        public static SielBuilder UseDependenceInjectionTaskFactory(this SielBuilder builder)
+        public static SielBuilder UseDependencyInjectionTaskFactory(this SielBuilder builder)
         {
-            builder.Services.AddSingleton<ITaskFactory, DependenceInjectionTaskFactory>();
+            builder.Services.AddSingleton<ITaskFactory, DependencyInjectionTaskFactory>();
             return builder;
         }
 
