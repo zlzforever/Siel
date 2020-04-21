@@ -9,8 +9,6 @@ namespace Siel
     /// </summary>
     public abstract class CronTask : TaskBase
     {
-        private int _retried;
-
         /// <summary>
         /// Cron Expression
         /// </summary>
@@ -47,24 +45,10 @@ namespace Siel
             }
         }
 
-        protected override void Complete(bool success, ITimeout timeout)
+        protected override void Complete(ITimeout timeout)
         {
             // manually trigger, no need to cyclical this task
             if (timeout == null)
-            {
-                return;
-            }
-
-            if (!success)
-            {
-                _retried++;
-            }
-            else
-            {
-                _retried = 0;
-            }
-
-            if (_retried > 3)
             {
                 return;
             }

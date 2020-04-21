@@ -24,32 +24,27 @@ create table if not exists siel_task
     properties          varchar(1000) null,
     success             int           not null default 0,
     failure             int           not null default 0,
-    creation_time       timestamp   not null default current_timestamp   
+    creation_time       timestamp   not null default current_timestamp,
+    last_execution_time timestamp   null
 );
 
 create index IX_siel_task_name on siel_task (name);
 create index IX_siel_task_creation_time on siel_task (creation_time);
 
-create table if not exists siel_task_success
-(
-    id                bigint        not null auto_increment primary key,
-    task_id           varchar(36)      not null,   
-    creation_time     timestamp   not null default current_timestamp
-);
-
-create index IX_siel_task_success_creation_time on siel_task_success (creation_time);
-create index IX_siel_task_success_task_id on siel_task_success (task_id);
-
-create table if not exists siel_task_failure
+create table if not exists siel_task_history
 (
     id                bigint        not null auto_increment primary key,
     task_id           varchar(36)      not null,
+    type              varchar(500)     not null, 
+    duration          int              not null,
+    success           bit              not null,
+    message           varchar(500)     null,
     stack_trace       text          null,
     creation_time     timestamp   not null default current_timestamp
 );
 
-create index IX_siel_task_failure_creation_time on siel_task_failure (creation_time);
-create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
+create index IX_siel_task_history_creation_time on siel_task_history (creation_time);
+create index IX_siel_task_history_task_id on siel_task_history (task_id);
 ";
 
         public MySqlStore(string connectionString)
@@ -170,7 +165,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
         {
             using var conn = new MySqlConnection(_connectionString);
             await conn.ExecuteAsync(
-                $"insert into siel_task_failure (task_id, stack_trace) values (@Id, @StackTrace); update siel_task set failure = failure + 1 where id = @Id;",
+                $"insert into siel_task_history (task_id, type, duration, success, message, stack_trace) values (@Id, @Type, @Duration, false, @Message, @StackTrace); update siel_task set failure = failure + 1 where id = @Id;",
                 @event);
         }
 
@@ -178,7 +173,7 @@ create index IX_siel_task_failure_task_id on siel_task_failure (task_id);
         {
             using var conn = new MySqlConnection(_connectionString);
             await conn.ExecuteAsync(
-                $"insert into siel_task_success (task_id) values (@Id); update siel_task set success = success + 1 where id = @Id;",
+                $"insert into siel_task_history (task_id, type, duration, success) values (@Id, @Type, @Duration, true); update siel_task set success = success + 1, last_execution_time = current_timestamp where id = @Id;",
                 @event);
         }
     }

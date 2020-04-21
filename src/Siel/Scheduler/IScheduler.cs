@@ -18,5 +18,6 @@ namespace Siel.Scheduler
         ValueTask<bool> RemoveAsync(string id);
         ValueTask<bool> TriggerAsync(string id);
         Task<PagedResult<PersistedTask>> PagedQueryAsync(string keyword, int page, int limit);
+        Task<SielStatus> GetStatusAsync();
     }
 }

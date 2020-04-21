@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using HWT;
 using Microsoft.Extensions.Logging;
@@ -12,6 +14,10 @@ namespace Siel
     public abstract class TaskBase : ITask
     {
         private bool _removed;
+
+        public static int ProcessingCount;
+        
+        public int Retry { get; set; } = 1;
 
         /// <summary>
         /// 任务标识
@@ -71,6 +77,11 @@ namespace Siel
                     Properties.Add(property.Key, property.Value);
                 }
             }
+
+            if (Retry < 1)
+            {
+                Retry = 1;
+            }
         }
 
         public void UseLoggerFactory(ILoggerFactory loggerFactory)
@@ -82,26 +93,45 @@ namespace Siel
         {
             if (!_removed)
             {
-                var success = false;
-                try
+                // todo: maybe we should create a new timeout to scheduler retry job
+                // 1. 所有任务进度都存在内存中，若是进程崩溃，则所有重试信息都丢失
+                // 2. 或者新开一种 RetryTask 来解决
+                for (var i = 1; i < Retry + 1; ++i)
                 {
-                    await HandleAsync();
-                    success = true;
-                    if (OnSuccess != null)
+                    var stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    try
                     {
-                        await OnSuccess.Invoke(new SuccessEvent(Id));
+                        Interlocked.Increment(ref ProcessingCount);
+
+                        await HandleAsync();
+
+                        stopwatch.Stop();
+                        if (OnSuccess != null)
+                        {
+                            await OnSuccess.Invoke(new SuccessEvent(Id,
+                                GetType().FullName, (int) stopwatch.ElapsedMilliseconds));
+                        }
+
+                        break;
                     }
-                }
-                catch (Exception e)
-                {
-                    if (OnFail != null)
+                    catch (Exception e)
                     {
-                        await OnFail.Invoke(new FailureEvent(Id, e.StackTrace));
+                        stopwatch.Stop();
+                        if (OnFail != null)
+                        {
+                            await OnFail.Invoke(new FailureEvent(Id, GetType().FullName,
+                                (int) stopwatch.ElapsedMilliseconds, $"Execute at {i} of {Retry}: {e.Message}",
+                                e.StackTrace));
+                        }
+
+                        await Task.Delay(10000);
                     }
-                }
-                finally
-                {
-                    Complete(success, timeout);
+                    finally
+                    {
+                        Interlocked.Decrement(ref ProcessingCount);
+                        Complete(timeout);
+                    }
                 }
             }
             else
@@ -110,7 +140,7 @@ namespace Siel
             }
         }
 
-        protected virtual void Complete(bool success, ITimeout timeout)
+        protected virtual void Complete(ITimeout timeout)
         {
         }
 

@@ -144,6 +144,15 @@ namespace Siel.Scheduler
             return await _taskStore.PagedQueryAsync(keyword, page, limit);
         }
 
+        public Task<SielStatus> GetStatusAsync()
+        {
+            return Task.FromResult(new SielStatus
+            {
+                ProcessingCount = TaskBase.ProcessingCount,
+                PendingTimeouts = (int) _timer.PendingTimeouts
+            });
+        }
+
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             _timer.Stop();
