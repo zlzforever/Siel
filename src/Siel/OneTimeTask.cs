@@ -4,19 +4,19 @@ namespace Siel
 {
     public abstract class OneTimeTask : TaskBase
     {
-        protected OneTimeTask(DateTime triggerAt)
+        public DateTime TriggerAt { get; private set; }
+
+        public override void Verify()
         {
-            if (triggerAt <= DateTime.UtcNow)
+            if (TriggerAt <= DateTime.UtcNow)
             {
                 throw new ArgumentException("Should later then now");
             }
         }
 
-        public DateTime TriggerAt { get; private set; }
-
         public override TimeSpan GetNextTimeSpan()
         {
-            return TriggerAt.Subtract(DateTime.UtcNow);
+            return GetPerformedCount() > 0 ? TimeSpan.Zero : TriggerAt.Subtract(DateTime.UtcNow);
         }
 
         public override void Load(TaskBase origin)
@@ -24,6 +24,7 @@ namespace Siel
             if (origin is OneTimeTask task)
             {
                 TriggerAt = task.TriggerAt;
+                Retry = task.Retry;
             }
         }
     }

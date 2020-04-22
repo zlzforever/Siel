@@ -149,7 +149,7 @@ namespace Siel.Scheduler
             return Task.FromResult(new SielStatus
             {
                 ProcessingCount = TaskBase.ProcessingCount,
-                PendingTimeouts = (int) _timer.PendingTimeouts
+                PendingTimeouts = _timer.PendingTimeouts
             });
         }
 
@@ -228,7 +228,7 @@ namespace Siel.Scheduler
             var task = _taskFactory.Create(persistedTask.TypeName, persistedTask.Data);
             task.Verify();
             task.UseLoggerFactory(_loggerFactory);
-            task.Initialize(persistedTask.Id, persistedTask.Name, persistedTask.GetProperties());
+            task.SetData(persistedTask.Id, persistedTask.Name, persistedTask.GetProperties());
             task.OnSuccess += async @event =>
             {
                 _logger.LogInformation($"Execute task {@event.Id} success");

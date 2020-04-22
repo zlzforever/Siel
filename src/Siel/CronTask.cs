@@ -24,6 +24,7 @@ namespace Siel
             if (origin is CronTask task)
             {
                 Cron = task.Cron;
+                Retry = task.Retry;
             }
         }
 
@@ -42,21 +43,6 @@ namespace Siel
             else
             {
                 CronExpression.Parse(Cron);
-            }
-        }
-
-        protected override void Complete(ITimeout timeout)
-        {
-            // manually trigger, no need to cyclical this task
-            if (timeout == null)
-            {
-                return;
-            }
-
-            var next = GetNextTimeSpan();
-            if (next > TimeSpan.Zero)
-            {
-                timeout.Timer.NewTimeout(this, next);
             }
         }
 

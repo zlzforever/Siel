@@ -2,7 +2,7 @@ namespace Siel.Scheduler
 {
     public class SielStatus
     {
-        public int ProcessingCount { get; set; }
-        public int PendingTimeouts { get; set; }
+        public long ProcessingCount { get; set; }
+        public long PendingTimeouts { get; set; }
     }
 }

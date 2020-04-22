@@ -14,9 +14,13 @@ namespace Siel
     public abstract class TaskBase : ITask
     {
         private bool _removed;
+        private long _performedCount;
+        private static long _processingCount;
 
-        public static int ProcessingCount;
-        
+        public static long ProcessingCount => Interlocked.Read(ref _processingCount);
+
+        protected long GetPerformedCount() => Interlocked.Read(ref _performedCount);
+
         public int Retry { get; set; } = 1;
 
         /// <summary>
@@ -66,7 +70,7 @@ namespace Siel
             _removed = true;
         }
 
-        public void Initialize(string id, string name, IReadOnlyDictionary<string, string> properties)
+        public void SetData(string id, string name, IReadOnlyDictionary<string, string> properties)
         {
             Id = id;
             Name = name;
@@ -102,11 +106,14 @@ namespace Siel
                     stopwatch.Start();
                     try
                     {
-                        Interlocked.Increment(ref ProcessingCount);
+                        Interlocked.Increment(ref _processingCount);
 
                         await HandleAsync();
 
                         stopwatch.Stop();
+
+                        Interlocked.Increment(ref _performedCount);
+
                         if (OnSuccess != null)
                         {
                             await OnSuccess.Invoke(new SuccessEvent(Id,
@@ -129,7 +136,7 @@ namespace Siel
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref ProcessingCount);
+                        Interlocked.Decrement(ref _processingCount);
                         Complete(timeout);
                     }
                 }
@@ -140,12 +147,23 @@ namespace Siel
             }
         }
 
-        protected virtual void Complete(ITimeout timeout)
-        {
-        }
-
         public abstract void Load(TaskBase origin);
 
         public abstract void Verify();
+
+        private void Complete(ITimeout timeout)
+        {
+            // manually trigger, no need to cyclical this task
+            if (timeout == null)
+            {
+                return;
+            }
+
+            var next = GetNextTimeSpan();
+            if (next > TimeSpan.Zero)
+            {
+                timeout.Timer.NewTimeout(this, next);
+            }
+        }
     }
 }
